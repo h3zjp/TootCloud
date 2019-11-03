@@ -235,4 +235,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host=app.config['LISTEN_IP'], port=app.config['PORT'])
