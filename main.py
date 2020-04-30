@@ -10,7 +10,6 @@ import json
 import requests
 import MeCab
 
-
 app = Flask(__name__)
 app.config.from_object('config')
 db = TinyDB('db.json')
@@ -18,13 +17,14 @@ qwy = Query()
 m = MeCab.Tagger()
 target_hinshi = ['名詞', '形容詞', '形容動詞']
 exclude = ['非自立', '接尾']
-
+with open("stopwordlist.txt") as f:
+    swl = [s.strip() for s in f.readlines()]
 
 def register_app(host):
     data = {
         'client_name': 'TootCloud',
         'redirect_uris': app.config['SITE_URL'] + '/callback',
-        'scopes': 'read write',
+        'scopes': 'read:accounts read:statuses write:media write:statuses',
         'website': app.config['SITE_URL']
     }
     resp = requests.post("https://{host}/api/v1/apps".format(host=host), data=data)
@@ -195,8 +195,13 @@ def result():
         if request.method == 'POST':
             num = int(request.form["TootsNum"])
             vis = request.form.getlist("visibility")
-            ex = request.form["ExcludeWord"]
-            exl = re.split('\W+', ex)
+            ex_opt = len(request.form.getlist("defaultlist"))
+            if ex_opt == 1:
+                exl = swl
+            else:
+                exl = []
+            ex = request.form["exlist"]
+            exl.extend(re.split('\W+', ex))
             filename = wc(num, vis, exl)
             if filename == None:
                 return render_template('setting.html', status="logout", site_url=app.config['SITE_URL'], error="notext")
